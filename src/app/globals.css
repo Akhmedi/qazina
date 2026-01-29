@@ -1,7 +1,6 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
 :root {
   /* FinovateX Color Variables */
@@ -18,13 +17,18 @@
 }
 
 @layer base {
+  * {
+    @apply border-border;
+  }
+
   html {
     scroll-behavior: smooth;
   }
-  
+
   body {
-    @apply font-inter text-finovate-dark-gray bg-white;
+    @apply bg-white text-finovate-dark-gray font-inter;
     line-height: 1.5;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
@@ -33,74 +37,74 @@
   .btn-primary {
     @apply bg-finovate-orange hover:bg-finovate-orange-hover text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all shadow-lg hover:shadow-xl;
   }
-  
+
   .btn-secondary {
     @apply border-2 border-finovate-orange text-finovate-orange hover:bg-finovate-orange-light hover:text-finovate-orange px-8 py-4 rounded-xl font-semibold text-lg transition-all;
   }
-  
+
   .btn-outline {
     @apply border-2 border-finovate-navy text-finovate-navy hover:bg-finovate-navy hover:text-white px-6 py-3 rounded-lg font-medium transition-all;
   }
-  
+
   /* Card Components */
   .card {
     @apply bg-white rounded-2xl shadow-finovate hover:shadow-finovate-hover p-8 transition-all duration-300;
   }
-  
+
   .card-hover {
     @apply hover:-translate-y-2 hover:shadow-finovate-hover transition-all duration-300;
   }
-  
+
   /* Section Components */
   .section {
     @apply py-20 px-4;
   }
-  
+
   .section-light {
     @apply bg-finovate-gray;
   }
-  
+
   .section-dark {
     @apply bg-finovate-navy text-white;
   }
-  
+
   /* Typography */
   .heading-1 {
     @apply text-5xl md:text-6xl font-bold text-finovate-navy leading-tight;
   }
-  
+
   .heading-2 {
     @apply text-4xl font-bold text-finovate-navy mb-4;
   }
-  
+
   .heading-3 {
     @apply text-2xl font-semibold text-finovate-navy mb-3;
   }
-  
+
   .body-text {
     @apply text-lg text-finovate-dark-gray leading-relaxed;
   }
-  
+
   /* Gradient Backgrounds */
   .gradient-primary {
     @apply bg-gradient-to-br from-finovate-beige to-finovate-beige-light;
   }
-  
+
   .gradient-orange {
     @apply bg-gradient-to-r from-finovate-orange to-finovate-orange-hover;
   }
-  
+
   .gradient-colorful {
     background: linear-gradient(135deg, var(--finovate-orange) 0%, #ff8533 25%, #ffaa66 50%, var(--finovate-orange) 75%, #ff4400 100%);
     background-size: 400% 400%;
     animation: gradientShift 8s ease infinite;
   }
-  
+
   /* Form Components */
   .form-input {
     @apply w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange transition-all;
   }
-  
+
   .form-label {
     @apply block text-sm font-semibold text-finovate-navy mb-2;
   }
@@ -111,24 +115,24 @@
   .animate-fade-in {
     animation: fadeIn 0.8s ease-in;
   }
-  
+
   .animate-hover-lift {
     @apply hover:-translate-y-2 transition-all duration-300;
   }
-  
+
   .animate-pulse-glow {
     animation: pulseGlow 2s ease-in-out infinite alternate;
   }
-  
+
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
-  
+
   .animate-float-delayed {
     animation: float 6s ease-in-out infinite;
     animation-delay: 2s;
   }
-  
+
   .animate-float-slow {
     animation: float 8s ease-in-out infinite;
     animation-delay: 1s;
@@ -138,46 +142,52 @@
   .container-max {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
-  
+
   .section-spacing {
     @apply py-20;
   }
-  
+
   /* Text Utilities */
   .text-gradient {
     @apply bg-gradient-to-r from-finovate-orange to-finovate-orange-hover bg-clip-text text-transparent;
   }
-  
-  /* Keyframe Animations */
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Keyframe Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  
-  @keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  @keyframes pulseGlow {
-    from { box-shadow: 0 0 20px rgba(242, 139, 48, 0.3); }
-    to { box-shadow: 0 0 40px rgba(242, 139, 48, 0.6); }
-  }
-  
-  @keyframes float {
-    0% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-20px) rotate(5deg); }
-    100% { transform: translateY(0px) rotate(0deg); }
-  }
-  
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-  
-  @keyframes pulse-delayed {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes pulseGlow {
+  from { box-shadow: 0 0 20px rgba(242, 139, 48, 0.3); }
+  to { box-shadow: 0 0 40px rgba(242, 139, 48, 0.6); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes pulse-delayed {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }

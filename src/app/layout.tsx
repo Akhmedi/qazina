@@ -4,11 +4,18 @@ import './globals.css'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
-const poppins = Poppins({ 
-  subsets: ['latin'], 
+const inter = Inter({
+  subsets: ['latin', 'cyrillic'],
   weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-poppins' 
+  variable: '--font-inter',
+  display: 'swap',
+})
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-poppins',
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -23,7 +30,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru" className={`${inter.variable} ${poppins.variable}`}>
-      <body className={`${inter.className} font-sans`}>
+      <body className={`${inter.className} font-sans antialiased`}>
         <Navigation />
         {children}
         <Footer />
