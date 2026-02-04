@@ -55,14 +55,14 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              Платформа для твоих
+              Контроль и управление
               <motion.span
                 className="text-finovate-orange block mt-2"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
               >
-                финансов
+                личными финансами
               </motion.span>
             </motion.h1>
             <motion.p
@@ -93,60 +93,60 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 bg-white">
-        <div className="container-max">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <motion.div
-              className="text-center group"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -5 }}
-            >
-              <div className="text-4xl md:text-5xl font-bold text-finovate-orange mb-3 group-hover:scale-110 transition-transform">10K+</div>
-              <div className="text-gray-600 font-medium">Активных пользователей</div>
-              <div className="w-12 h-1 bg-finovate-orange mx-auto mt-4 rounded-full group-hover:w-16 transition-all"></div>
-            </motion.div>
-            <motion.div
-              className="text-center group"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -5 }}
-            >
-              <div className="text-4xl md:text-5xl font-bold text-finovate-orange mb-3 group-hover:scale-110 transition-transform">₸50М+</div>
-              <div className="text-gray-600 font-medium">Сэкономлено на кредитах</div>
-              <div className="w-12 h-1 bg-finovate-orange mx-auto mt-4 rounded-full group-hover:w-16 transition-all"></div>
-            </motion.div>
-            <motion.div
-              className="text-center group"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -5 }}
-            >
-              <div className="text-4xl md:text-5xl font-bold text-finovate-orange mb-3 group-hover:scale-110 transition-transform">₸100М+</div>
-              <div className="text-gray-600 font-medium">Инвестировано</div>
-              <div className="w-12 h-1 bg-finovate-orange mx-auto mt-4 rounded-full group-hover:w-16 transition-all"></div>
-            </motion.div>
-            <motion.div
-              className="text-center group"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -5 }}
-            >
-              <div className="text-4xl md:text-5xl font-bold text-finovate-orange mb-3 group-hover:scale-110 transition-transform">99%</div>
-              <div className="text-gray-600 font-medium">Довольных клиентов</div>
-              <div className="w-12 h-1 bg-finovate-orange mx-auto mt-4 rounded-full group-hover:w-16 transition-all"></div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+      {/*<section className="py-20 bg-white">*/}
+      {/*  <div className="container-max">*/}
+      {/*    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">*/}
+      {/*      <motion.div*/}
+      {/*        className="text-center group"*/}
+      {/*        initial={{ opacity: 0, y: 30 }}*/}
+      {/*        whileInView={{ opacity: 1, y: 0 }}*/}
+      {/*        transition={{ duration: 0.6, delay: 0.1 }}*/}
+      {/*        viewport={{ once: true }}*/}
+      {/*        whileHover={{ y: -5 }}*/}
+      {/*      >*/}
+      {/*        <div className="text-4xl md:text-5xl font-bold text-finovate-orange mb-3 group-hover:scale-110 transition-transform">10K+</div>*/}
+      {/*        <div className="text-gray-600 font-medium">Активных пользователей</div>*/}
+      {/*        <div className="w-12 h-1 bg-finovate-orange mx-auto mt-4 rounded-full group-hover:w-16 transition-all"></div>*/}
+      {/*      </motion.div>*/}
+      {/*      <motion.div*/}
+      {/*        className="text-center group"*/}
+      {/*        initial={{ opacity: 0, y: 30 }}*/}
+      {/*        whileInView={{ opacity: 1, y: 0 }}*/}
+      {/*        transition={{ duration: 0.6, delay: 0.2 }}*/}
+      {/*        viewport={{ once: true }}*/}
+      {/*        whileHover={{ y: -5 }}*/}
+      {/*      >*/}
+      {/*        <div className="text-4xl md:text-5xl font-bold text-finovate-orange mb-3 group-hover:scale-110 transition-transform">₸50М+</div>*/}
+      {/*        <div className="text-gray-600 font-medium">Сэкономлено на кредитах</div>*/}
+      {/*        <div className="w-12 h-1 bg-finovate-orange mx-auto mt-4 rounded-full group-hover:w-16 transition-all"></div>*/}
+      {/*      </motion.div>*/}
+      {/*      <motion.div*/}
+      {/*        className="text-center group"*/}
+      {/*        initial={{ opacity: 0, y: 30 }}*/}
+      {/*        whileInView={{ opacity: 1, y: 0 }}*/}
+      {/*        transition={{ duration: 0.6, delay: 0.3 }}*/}
+      {/*        viewport={{ once: true }}*/}
+      {/*        whileHover={{ y: -5 }}*/}
+      {/*      >*/}
+      {/*        <div className="text-4xl md:text-5xl font-bold text-finovate-orange mb-3 group-hover:scale-110 transition-transform">₸100М+</div>*/}
+      {/*        <div className="text-gray-600 font-medium">Инвестировано</div>*/}
+      {/*        <div className="w-12 h-1 bg-finovate-orange mx-auto mt-4 rounded-full group-hover:w-16 transition-all"></div>*/}
+      {/*      </motion.div>*/}
+      {/*      <motion.div*/}
+      {/*        className="text-center group"*/}
+      {/*        initial={{ opacity: 0, y: 30 }}*/}
+      {/*        whileInView={{ opacity: 1, y: 0 }}*/}
+      {/*        transition={{ duration: 0.6, delay: 0.4 }}*/}
+      {/*        viewport={{ once: true }}*/}
+      {/*        whileHover={{ y: -5 }}*/}
+      {/*      >*/}
+      {/*        <div className="text-4xl md:text-5xl font-bold text-finovate-orange mb-3 group-hover:scale-110 transition-transform">99%</div>*/}
+      {/*        <div className="text-gray-600 font-medium">Довольных клиентов</div>*/}
+      {/*        <div className="w-12 h-1 bg-finovate-orange mx-auto mt-4 rounded-full group-hover:w-16 transition-all"></div>*/}
+      {/*      </motion.div>*/}
+      {/*    </div>*/}
+      {/*  </div>*/}
+      {/*</section>*/}
 
       {/* Why Choose Qazinv Section */}
       <section className="py-32 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
@@ -358,8 +358,7 @@ export default function Home() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.6, delay: 0.7 }}
                 >
-                  Создать сообщество финансово грамотных людей, которые уверенно управляют своими деньгами
-                  и помогают другим делать то же самое.
+                  Создать удобную экосистему, которая помогает людям принимать осознанные финансовые решения и уверенно управлять своими деньгами.
                 </motion.p>
                 <motion.div
                   className="flex items-center space-x-4"
@@ -445,7 +444,7 @@ export default function Home() {
                       viewport={{ once: true }}
                       transition={{ duration: 0.6, delay: 0.4 }}
                     >
-                      Умный калькулятор, который помогает понять реальную стоимость кредита и сравнить разные предложения
+                      Умный калькулятор, позволяющий сравнивать предложения и получать персонализированные базовые рекомендации по кредитным действиям.
                     </motion.p>
                     <motion.div
                       className="flex items-center text-finovate-orange font-semibold"
@@ -507,7 +506,7 @@ export default function Home() {
                       viewport={{ once: true }}
                       transition={{ duration: 0.6, delay: 0.5 }}
                     >
-                      Персонализированные инвестиционные рекомендации на основе ваших целей и риск-профиля
+                      Создание и тестирование инвестиционных стратегий в демо-среде на основе фундаментального анализа.
                     </motion.p>
                     <motion.div
                       className="flex items-center text-finovate-orange font-semibold"

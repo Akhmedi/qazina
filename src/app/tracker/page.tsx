@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useRef } from 'react'
@@ -20,6 +21,7 @@ interface Goal {
   currentAmount: number
   monthlyContribution: number
   deadline: string
+  initialPayment?: number
 }
 
 // Иконки
@@ -74,6 +76,7 @@ const LineChart = ({ period }: { period: string }) => (
 
 export default function TrackerPage() {
   const [activeTab, setActiveTab] = useState<'budget' | 'analytics' | 'goals'>('budget')
+  const [goalsTab, setGoalsTab] = useState<'active' | 'completed'>('active')
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('month')
   const [showAddIncome, setShowAddIncome] = useState(false)
   const [showAddExpense, setShowAddExpense] = useState(false)
@@ -81,6 +84,15 @@ export default function TrackerPage() {
   const [editingGoal, setEditingGoal] = useState<string | null>(null)
   const [customAmount, setCustomAmount] = useState('')
   const [showCustomInput, setShowCustomInput] = useState<string | null>(null)
+
+  // Форма создания цели
+  const [goalForm, setGoalForm] = useState({
+    name: '',
+    targetAmount: '',
+    monthlyContribution: '',
+    deadline: '',
+    initialPayment: ''
+  })
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -100,9 +112,18 @@ export default function TrackerPage() {
       id: '1',
       name: 'Первоначальный взнос на квартиру',
       targetAmount: 5000000,
-      currentAmount: 1200000,
+      currentAmount: 5000000, // 100% для демонстрации
       monthlyContribution: 150000,
-      deadline: '2025-12-31'
+      deadline: '2025-12-31',
+      initialPayment: 200000
+    },
+    {
+      id: '2',
+      name: 'Отпуск в Европе',
+      targetAmount: 800000,
+      currentAmount: 400000, // 50% для демонстрации
+      monthlyContribution: 80000,
+      deadline: '2025-06-30'
     }
   ])
 
@@ -111,12 +132,50 @@ export default function TrackerPage() {
   const totalExpense = expenseItems.reduce((sum, item) => sum + item.amount, 0)
   const balance = totalIncome - totalExpense
 
+  // Фильтрация целей
+  const activeGoals = goals.filter(goal => {
+    const progress = (goal.currentAmount / goal.targetAmount) * 100
+    return progress < 100
+  })
+
+  const completedGoals = goals.filter(goal => {
+    const progress = (goal.currentAmount / goal.targetAmount) * 100
+    return progress >= 100
+  })
+
   // Данные для круговой диаграммы расходов
   const expenseChartData = expenseItems.map((item, index) => ({
     name: item.name,
     value: item.amount,
     color: ['#F28B30', '#5A6CF5', '#10B981', '#F59E0B', '#EF4444'][index % 5]
   }))
+
+  // Функции для расчета автоматических значений
+  const calculateMissingValue = () => {
+    const target = parseFloat(goalForm.targetAmount)
+    const initial = parseFloat(goalForm.initialPayment) || 0
+    const remaining = target - initial
+
+    if (goalForm.monthlyContribution && !goalForm.deadline) {
+      // Рассчитать дедлайн по ежемесячному взносу
+      const months = Math.ceil(remaining / parseFloat(goalForm.monthlyContribution))
+      const calculatedDeadline = new Date()
+      calculatedDeadline.setMonth(calculatedDeadline.getMonth() + months)
+      setGoalForm({
+        ...goalForm,
+        deadline: calculatedDeadline.toISOString().split('T')[0]
+      })
+    } else if (goalForm.deadline && !goalForm.monthlyContribution) {
+      // Рассчитать ежемесячный взнос по дедлайну
+      const deadlineDate = new Date(goalForm.deadline)
+      const now = new Date()
+      const months = Math.max(1, Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30)))
+      setGoalForm({
+        ...goalForm,
+        monthlyContribution: (remaining / months).toFixed(2)
+      })
+    }
+  }
 
   // Функции для добавления элементов
   const addIncomeItem = (name: string, amount: number) => {
@@ -137,14 +196,15 @@ export default function TrackerPage() {
     }])
   }
 
-  const addGoal = (name: string, targetAmount: number, monthlyContribution: number, deadline: string) => {
+  const addGoal = (name: string, targetAmount: number, monthlyContribution: number, deadline: string, initialPayment?: number) => {
     setGoals([...goals, {
       id: Date.now().toString(),
       name,
       targetAmount,
-      currentAmount: 0,
+      currentAmount: initialPayment || 0,
       monthlyContribution,
-      deadline
+      deadline,
+      initialPayment
     }])
   }
 
@@ -188,6 +248,51 @@ export default function TrackerPage() {
       setCustomAmount('')
       setShowCustomInput(null)
     }
+  }
+
+  // Обработка изменений в форме цели
+  const handleGoalFormChange = (field: string, value: string) => {
+    const newForm = { ...goalForm, [field]: value }
+    setGoalForm(newForm)
+
+    // Автоматический расчет при изменении ключевых полей
+    if (field === 'monthlyContribution' || field === 'deadline' || field === 'targetAmount' || field === 'initialPayment') {
+      setTimeout(() => calculateMissingValue(), 100)
+    }
+  }
+
+  const handleGoalSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    // Проверка обязательных полей
+    if (!goalForm.name || !goalForm.targetAmount) {
+      alert('Пожалуйста, заполните название цели и целевую сумму')
+      return
+    }
+
+    // Проверка что хотя бы одно из полей (ежемесячный взнос или дедлайн) заполнено
+    if (!goalForm.monthlyContribution && !goalForm.deadline) {
+      alert('Пожалуйста, заполните либо ежемесячный взнос, либо дату дедлайна')
+      return
+    }
+
+    addGoal(
+      goalForm.name,
+      Number(goalForm.targetAmount),
+      Number(goalForm.monthlyContribution),
+      goalForm.deadline,
+      Number(goalForm.initialPayment) || undefined
+    )
+
+    // Сброс формы
+    setGoalForm({
+      name: '',
+      targetAmount: '',
+      monthlyContribution: '',
+      deadline: '',
+      initialPayment: ''
+    })
+    setShowAddGoal(false)
   }
 
   return (
@@ -581,18 +686,40 @@ export default function TrackerPage() {
             >
               <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold text-finovate-navy">Финансовые цели</h2>
-                <button
-                  onClick={() => setShowAddGoal(true)}
-                  className="bg-finovate-orange text-white px-6 py-3 rounded-xl font-semibold hover:bg-finovate-orange-hover transition-colors"
-                >
-                  Добавить цель
-                </button>
               </div>
 
+              {/* Вкладки для целей */}
+              <div className="flex justify-center">
+                <div className="bg-white rounded-2xl p-2 flex space-x-2 shadow-lg">
+                  <button
+                    onClick={() => setGoalsTab('active')}
+                    className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                      goalsTab === 'active'
+                        ? 'bg-finovate-orange text-white shadow-lg'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    Активные ({activeGoals.length})
+                  </button>
+                  <button
+                    onClick={() => setGoalsTab('completed')}
+                    className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                      goalsTab === 'completed'
+                        ? 'bg-finovate-orange text-white shadow-lg'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    Выполненные ({completedGoals.length})
+                  </button>
+                </div>
+              </div>
+
+              {/* Отображение целей в зависимости от выбранной вкладки */}
               <div className="grid lg:grid-cols-2 gap-8">
-                {goals.map((goal) => {
+                {(goalsTab === 'active' ? activeGoals : completedGoals).map((goal) => {
                   const progress = (goal.currentAmount / goal.targetAmount) * 100
                   const monthsLeft = Math.ceil((goal.targetAmount - goal.currentAmount) / goal.monthlyContribution)
+                  const isCompleted = progress >= 100
 
                   return (
                     <div key={goal.id} className="bg-white rounded-3xl shadow-2xl p-8">
@@ -606,7 +733,8 @@ export default function TrackerPage() {
                               name: formData.get('name') as string,
                               targetAmount: Number(formData.get('targetAmount')),
                               monthlyContribution: Number(formData.get('monthlyContribution')),
-                              deadline: formData.get('deadline') as string
+                              deadline: formData.get('deadline') as string,
+                              initialPayment: Number(formData.get('initialPayment')) || 0
                             })
                             setEditingGoal(null)
                           }}
@@ -634,16 +762,23 @@ export default function TrackerPage() {
                               defaultValue={goal.monthlyContribution}
                               placeholder="Ежемесячный взнос"
                               className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
-                              required
                             />
                           </div>
-                          <input
-                            type="date"
-                            name="deadline"
-                            defaultValue={goal.deadline}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
-                            required
-                          />
+                          <div className="grid grid-cols-2 gap-4">
+                            <input
+                              type="date"
+                              name="deadline"
+                              defaultValue={goal.deadline}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
+                            />
+                            <input
+                              type="number"
+                              name="initialPayment"
+                              defaultValue={goal.initialPayment || ''}
+                              placeholder="Первоначальный взнос (необязательно)"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
+                            />
+                          </div>
                           <div className="flex space-x-4">
                             <button
                               type="submit"
@@ -665,26 +800,42 @@ export default function TrackerPage() {
                         <>
                           <div
                             className="flex items-center space-x-3 mb-6 cursor-pointer hover:bg-gray-50 p-2 rounded-xl transition-colors"
-                            onClick={() => setEditingGoal(goal.id)}
+                            onClick={() => !isCompleted && setEditingGoal(goal.id)}
                           >
-                            <div className="bg-finovate-orange-light p-3 rounded-xl">
+                            <div className={`p-3 rounded-xl ${isCompleted ? 'bg-green-100' : 'bg-finovate-orange-light'}`}>
                               <GoalIcon />
                             </div>
                             <h3 className="text-xl font-bold text-finovate-navy">{goal.name}</h3>
                           </div>
 
                           <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                              <span className="text-gray-600">Прогресс</span>
-                              <span className="font-bold text-finovate-navy">{progress.toFixed(1)}%</span>
-                            </div>
+                            {isCompleted ? (
+                              // Для выполненных целей
+                              <div className="text-center py-8">
+                                {/*<div className="text-6xl mb-4">🎉</div>*/}
+                                <div className="text-2xl font-bold text-green-600 mb-2">
+                                  Цель выполнена!
+                                </div>
+                                <div className="text-gray-600">
+                                  Поздравляем с достижением цели!
+                                </div>
+                              </div>
+                            ) : (
+                              // Для активных целей
+                              <>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-gray-600">Прогресс</span>
+                                  <span className="font-bold text-finovate-navy">{progress.toFixed(1)}%</span>
+                                </div>
 
-                            <div className="w-full bg-gray-200 rounded-full h-3">
-                              <div
-                                className="bg-finovate-orange h-3 rounded-full transition-all duration-300"
-                                style={{ width: `${Math.min(progress, 100)}%` }}
-                              ></div>
-                            </div>
+                                <div className="w-full bg-gray-200 rounded-full h-3">
+                                  <div
+                                    className="bg-finovate-orange h-3 rounded-full transition-all duration-300"
+                                    style={{ width: `${Math.min(progress, 100)}%` }}
+                                  ></div>
+                                </div>
+                              </>
+                            )}
 
                             <div className="grid grid-cols-2 gap-4 text-center">
                               <div className="bg-gray-50 p-4 rounded-xl">
@@ -701,64 +852,74 @@ export default function TrackerPage() {
                               </div>
                             </div>
 
-                            <div className="bg-finovate-orange-light p-4 rounded-xl">
-                              <div className="flex justify-between items-center">
-                                <span className="text-finovate-navy font-medium">Ежемесячно:</span>
-                                <span className="font-bold text-finovate-orange">{goal.monthlyContribution.toLocaleString()} тг</span>
-                              </div>
-                              <div className="flex justify-between items-center mt-2">
-                                <span className="text-finovate-navy font-medium">Осталось месяцев:</span>
-                                <span className="font-bold text-finovate-orange">{monthsLeft}</span>
-                              </div>
-                            </div>
+                            {!isCompleted && (
+                              <>
+                                <div className="bg-finovate-orange-light p-4 rounded-xl">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-finovate-navy font-medium">Ежемесячно:</span>
+                                    <span className="font-bold text-finovate-orange">{goal.monthlyContribution.toLocaleString()} тг</span>
+                                  </div>
+                                  <div className="flex justify-between items-center mt-2">
+                                    <span className="text-finovate-navy font-medium">Осталось месяцев:</span>
+                                    <span className="font-bold text-finovate-orange">{monthsLeft}</span>
+                                  </div>
+                                  {goal.initialPayment && (
+                                    <div className="flex justify-between items-center mt-2">
+                                      <span className="text-finovate-navy font-medium">Первоначальный взнос:</span>
+                                      <span className="font-bold text-finovate-orange">{goal.initialPayment.toLocaleString()} тг</span>
+                                    </div>
+                                  )}
+                                </div>
 
-                            {/* Кнопки пополнения */}
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => addToGoal(goal.id, goal.monthlyContribution)}
-                                className="flex-1 bg-green-500 text-white py-2 rounded-xl hover:bg-green-600 transition-colors"
-                              >
-                                Пополнить
-                              </button>
-                              <button
-                                onClick={() => setShowCustomInput(goal.id)}
-                                className="flex-1 bg-blue-500 text-white py-2 rounded-xl hover:bg-blue-600 transition-colors"
-                              >
-                                Другая сумма
-                              </button>
-                            </div>
-
-                            {/* Поле для ввода другой суммы */}
-                            <AnimatePresence>
-                              {showCustomInput === goal.id && (
-                                <motion.div
-                                  initial={{ opacity: 0, height: 0 }}
-                                  animate={{ opacity: 1, height: 'auto' }}
-                                  exit={{ opacity: 0, height: 0 }}
-                                  className="flex space-x-2"
-                                >
-                                  <input
-                                    type="number"
-                                    value={customAmount}
-                                    onChange={(e) => setCustomAmount(e.target.value)}
-                                    placeholder="Введите сумму"
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
-                                  />
+                                {/* Кнопки пополнения */}
+                                <div className="flex space-x-2">
                                   <button
-                                    onClick={() => handleCustomContribution(goal.id)}
-                                    className="bg-finovate-orange text-white px-4 py-2 rounded-xl hover:bg-finovate-orange-hover transition-colors"
+                                    onClick={() => addToGoal(goal.id, goal.monthlyContribution)}
+                                    className="flex-1 bg-green-500 text-white py-2 rounded-xl hover:bg-green-600 transition-colors"
                                   >
-                                    Добавить
+                                    Пополнить
                                   </button>
                                   <button
-                                    onClick={() => setShowCustomInput(null)}
-                                    className="bg-gray-500 text-white px-4 py-2 rounded-xl hover:bg-gray-600 transition-colors"
+                                    onClick={() => setShowCustomInput(goal.id)}
+                                    className="flex-1 bg-blue-500 text-white py-2 rounded-xl hover:bg-blue-600 transition-colors"
                                   >
-                                    ×
+                                    Другая сумма
                                   </button>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
+                                </div>
+
+                                {/* Поле для ввода другой суммы */}
+                                <AnimatePresence>
+                                  {showCustomInput === goal.id && (
+                                    <motion.div
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: 'auto' }}
+                                      exit={{ opacity: 0, height: 0 }}
+                                      className="flex space-x-2"
+                                    >
+                                      <input
+                                        type="number"
+                                        value={customAmount}
+                                        onChange={(e) => setCustomAmount(e.target.value)}
+                                        placeholder="Введите сумму"
+                                        className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
+                                      />
+                                      <button
+                                        onClick={() => handleCustomContribution(goal.id)}
+                                        className="bg-finovate-orange text-white px-4 py-2 rounded-xl hover:bg-finovate-orange-hover transition-colors"
+                                      >
+                                        Добавить
+                                      </button>
+                                      <button
+                                        onClick={() => setShowCustomInput(null)}
+                                        className="bg-gray-500 text-white px-4 py-2 rounded-xl hover:bg-gray-600 transition-colors"
+                                      >
+                                        ×
+                                      </button>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </>
+                            )}
                           </div>
                         </>
                       )}
@@ -777,23 +938,12 @@ export default function TrackerPage() {
                     className="bg-white rounded-3xl shadow-2xl p-8"
                   >
                     <h3 className="text-2xl font-bold text-finovate-navy mb-6">Добавить новую цель</h3>
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault()
-                        const formData = new FormData(e.target as HTMLFormElement)
-                        const name = formData.get('name') as string
-                        const targetAmount = Number(formData.get('targetAmount'))
-                        const monthlyContribution = Number(formData.get('monthlyContribution'))
-                        const deadline = formData.get('deadline') as string
-                        addGoal(name, targetAmount, monthlyContribution, deadline)
-                        setShowAddGoal(false)
-                      }}
-                      className="grid md:grid-cols-2 gap-6"
-                    >
+                    <form onSubmit={handleGoalSubmit} className="grid md:grid-cols-2 gap-6">
                       <div className="md:col-span-2">
                         <input
                           type="text"
-                          name="name"
+                          value={goalForm.name}
+                          onChange={(e) => handleGoalFormChange('name', e.target.value)}
                           placeholder="Название цели (например: Первоначальный взнос на квартиру)"
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
                           required
@@ -802,8 +952,9 @@ export default function TrackerPage() {
                       <div>
                         <input
                           type="number"
-                          name="targetAmount"
-                          placeholder="Целевая сумма (тг)"
+                          value={goalForm.targetAmount}
+                          onChange={(e) => handleGoalFormChange('targetAmount', e.target.value)}
+                          placeholder="Целевая сумма (тг) *"
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
                           required
                         />
@@ -811,19 +962,33 @@ export default function TrackerPage() {
                       <div>
                         <input
                           type="number"
-                          name="monthlyContribution"
-                          placeholder="Ежемесячный взнос (тг)"
+                          value={goalForm.initialPayment}
+                          onChange={(e) => handleGoalFormChange('initialPayment', e.target.value)}
+                          placeholder="Первоначальный взнос (тг) - необязательно"
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
-                          required
+                        />
+                      </div>
+                      <div>
+                        <input
+                          type="number"
+                          value={goalForm.monthlyContribution}
+                          onChange={(e) => handleGoalFormChange('monthlyContribution', e.target.value)}
+                          placeholder="Ежемесячный взнос (тг) - рассчитается автоматически"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
+                        />
+                      </div>
+                      <div>
+                        <input
+                          type="date"
+                          value={goalForm.deadline}
+                          onChange={(e) => handleGoalFormChange('deadline', e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <input
-                          type="date"
-                          name="deadline"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
-                          required
-                        />
+                        <p className="text-sm text-gray-600 mb-4">
+                          * Заполните либо ежемесячный взнос, либо дату дедлайна - второе поле рассчитается автоматически
+                        </p>
                       </div>
                       <div className="md:col-span-2 flex space-x-4">
                         <button
@@ -834,7 +999,16 @@ export default function TrackerPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setShowAddGoal(false)}
+                          onClick={() => {
+                            setShowAddGoal(false)
+                            setGoalForm({
+                              name: '',
+                              targetAmount: '',
+                              monthlyContribution: '',
+                              deadline: '',
+                              initialPayment: ''
+                            })
+                          }}
                           className="flex-1 bg-gray-500 text-white py-3 rounded-xl font-semibold hover:bg-gray-600 transition-colors"
                         >
                           Отмена

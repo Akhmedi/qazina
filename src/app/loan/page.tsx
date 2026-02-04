@@ -34,6 +34,7 @@ interface NewsItem {
   description: string
   image: string
   link: string
+  source: string
 }
 
 // Исправленный компонент для анимации появления элементов при скролле
@@ -526,11 +527,17 @@ const NewsCard = ({ news }: { news: NewsItem }) => (
       </motion.div>
     </div>
     <div className="p-6">
+      <div className="text-sm font-semibold text-finovate-orange mb-2">
+        {news.source}
+      </div>
       <h4 className="text-xl font-bold text-finovate-navy mb-3 group-hover:text-finovate-orange transition-colors">
         {news.title}
       </h4>
       <p className="text-gray-600 mb-4 leading-relaxed">{news.description}</p>
-      <motion.button
+      <motion.a
+        href={news.link}
+        target="_blank"
+        rel="noopener noreferrer"
         className="text-finovate-orange font-semibold hover:underline flex items-center"
         whileHover={{ x: 5 }}
         transition={{ duration: 0.2 }}
@@ -539,7 +546,7 @@ const NewsCard = ({ news }: { news: NewsItem }) => (
         <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
-      </motion.button>
+      </motion.a>
     </div>
   </motion.div>
 )
@@ -556,24 +563,27 @@ export default function LoanPage() {
   const newsItems: NewsItem[] = [
     {
       id: 1,
-      title: "Новые условия кредитования в 2024",
-      description: "Центральный банк снизил базовую ставку, что отразилось на условиях кредитования для населения.",
+      title: "Кто не сможет взять кредит в Казахстане в 2026 ?",
+      description: "Рынок потребительского кредитования Казахстана готовится к переменам. Национальный банк объявил о масштабных мерах для сдерживания избыточной закредитованности населения.",
       image: "/news1.jpg",
-      link: "#"
+      link: "https://www.zakon.kz/stati/6495840-kto-ne-smozhet-vzyat-kredit-v-kazakhstane-v-2026-godu.html",
+      source: "zakon.kz"
     },
     {
       id: 2,
-      title: "Как выбрать лучший кредит",
-      description: "Подробное руководство по выбору наиболее выгодных кредитных продуктов для различных целей.",
+      title: "Досрочное погашение займа: что важно знать",
+      description: "Под досрочным погашением понимается внесение средств на счет займа раньше установленного графика: полностью или частично. Важно понимать, как это влияет на структуру платежей.",
       image: "/news2.jpg",
-      link: "#"
+      link: "https://kmf.kz/en/news-inner/dosrochnoe-pogashenie-kredita-kak-eto-vliyaet-na-pereplatu-i-kogda-eto-dejstvitelno-vygodno/",
+      source: "kmf.kz"
     },
     {
       id: 3,
-      title: "Досрочное погашение: выгода и риски",
-      description: "Разбираем когда досрочное погашение кредита действительно выгодно, а когда лучше воздержаться.",
+      title: "Более 60% заемщиков в Казахстане пользуются рассрочками",
+      description: "По оценкам авторов, рынок розничного кредитования имеет высококонцентрированный характер, особенно в сегментах ипотечных и беззалоговых кредитов.",
       image: "/news3.jpg",
-      link: "#"
+      link: "https://kapital.kz/finance/144627/bolee-60percent-zaemshikov-v-kazahstane-polzuyutsya-rassrochkami.html",
+      source: "kapital.kz"
     }
   ]
 

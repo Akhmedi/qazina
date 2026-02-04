@@ -46,7 +46,7 @@ export default function Navigation() {
               <div className="w-10 h-10 bg-gradient-to-br from-finovate-orange to-finovate-orange-hover rounded-xl flex items-center justify-center">
                 <span className="text-white font-bold text-xl">Q</span>
               </div>
-              <span className="text-2xl font-bold text-finovate-navy">Qazinv</span>
+              <span className="text-2xl font-bold text-finovate-navy">Qazina</span>
             </Link>
           </motion.div>
 

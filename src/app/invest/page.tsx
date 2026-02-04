@@ -1,26 +1,8 @@
+
 'use client'
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-
-// Иконки компонентов
-const StockIcon = () => (
-  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-    <path d="M3 3v14l6-2 6 2V3l-6 2-6-2z"/>
-  </svg>
-)
-
-const BondIcon = () => (
-  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-    <path d="M4 4h12v12H4V4zm2 2v8h8V6H6z"/>
-  </svg>
-)
-
-const ETFIcon = () => (
-  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-    <path d="M2 4h16v12H2V4zm2 2v8h12V6H4z"/>
-  </svg>
-)
 
 export default function InvestmentPage() {
   return (
@@ -52,7 +34,9 @@ export default function InvestmentPage() {
             <Link href="/invest/stocks" className="block">
               <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl border-2 border-gray-200 p-8 hover:border-finovate-orange hover:shadow-2xl transition-all duration-300 w-80 h-64 flex flex-col justify-center items-center group">
                 <div className="bg-finovate-orange-light p-6 rounded-2xl mb-6 group-hover:bg-finovate-orange group-hover:text-white transition-all duration-300">
-                  <StockIcon />
+                    <svg className="w-10 h-10 text-finovate-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21V3m0 18h18M7 13l4-4 4 4 6-6" />
+                    </svg>
                 </div>
                 <h3 className="text-3xl font-bold text-finovate-navy mb-4 group-hover:text-finovate-orange transition-colors">Акции</h3>
                 <p className="text-gray-600 text-center leading-relaxed text-sm">
@@ -70,7 +54,9 @@ export default function InvestmentPage() {
             <Link href="/invest/bonds" className="block">
               <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl border-2 border-gray-200 p-8 hover:border-finovate-orange hover:shadow-2xl transition-all duration-300 w-80 h-64 flex flex-col justify-center items-center group">
                 <div className="bg-finovate-orange-light p-6 rounded-2xl mb-6 group-hover:bg-finovate-orange group-hover:text-white transition-all duration-300">
-                  <BondIcon />
+                  <svg className="w-10 h-10 text-finovate-orange" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M3 3h4v18H3V3zm7 6h4v12h-4V9zm7-4h4v16h-4V5z" />
+                  </svg>
                 </div>
                 <h3 className="text-3xl font-bold text-finovate-navy mb-4 group-hover:text-finovate-orange transition-colors">Облигации</h3>
                 <p className="text-gray-600 text-center leading-relaxed text-sm">
@@ -88,7 +74,9 @@ export default function InvestmentPage() {
             <Link href="/invest/etf" className="block">
               <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl border-2 border-gray-200 p-8 hover:border-finovate-orange hover:shadow-2xl transition-all duration-300 w-80 h-64 flex flex-col justify-center items-center group">
                 <div className="bg-finovate-orange-light p-6 rounded-2xl mb-6 group-hover:bg-finovate-orange group-hover:text-white transition-all duration-300">
-                  <ETFIcon />
+                  <svg className="w-10 h-10 text-finovate-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 21V3m0 18h18M7 17l4-4 4 3 6-7m0 0h-5m5 0v5" />
+                  </svg>
                 </div>
                 <h3 className="text-3xl font-bold text-finovate-navy mb-4 group-hover:text-finovate-orange transition-colors">ETF</h3>
                 <p className="text-gray-600 text-center leading-relaxed text-sm">
@@ -112,20 +100,20 @@ export default function InvestmentPage() {
           transition={{ delay: 0.4 }}
           className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8"
         >
-          <div className="bg-finovate-navy rounded-3xl p-12">
+          <div className="bg-finovate-navy rounded-3xl p-12 border-4 border-finovate-orange">
             <div className="text-center">
-              <h2 className="text-4xl font-bold text-orange-500 mb-12">Акции</h2>
+              <h2 className="text-4xl font-bold text-finovate-orange mb-12">Акции</h2>
 
               <div className="space-y-8 text-left max-w-4xl mx-auto">
                 <div>
-                  <h3 className="text-xl font-semibold text-finovate-orange mb-4">Что такое акции?</h3>
+                  <h3 className="text-xl font-semibold text-finovate-orange mb-4">-Что такое акции?</h3>
                   <p className="text-white leading-relaxed">
                     Это доля в компании. Покупая акцию, вы становитесь её совладельцем; прибыль приходит с ростом компании, убытки — при падении.
                   </p>
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-semibold text-finovate-orange mb-4">Зачем люди инвестируют в акции</h3>
+                  <h3 className="text-xl font-semibold text-finovate-orange mb-4">-Зачем люди инвестируют в акции:</h3>
                   <ul className="text-white space-y-2 leading-relaxed">
                     <li>● Долгосрочный рост капитала</li>
                     <li>● Более высокий потенциал отдачи</li>
@@ -134,7 +122,7 @@ export default function InvestmentPage() {
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-semibold text-finovate-orange mb-4">Как выбрать и на что обратить внимание</h3>
+                  <h3 className="text-xl font-semibold text-finovate-orange mb-4">-Как выбрать и на что обратить внимание:</h3>
                   <ul className="text-white space-y-2 leading-relaxed">
                     <li>● Выбирайте сильные и перспективные компании</li>
                     <li>● Анализируйте новости и финансовую устойчивость</li>
@@ -154,7 +142,7 @@ export default function InvestmentPage() {
           transition={{ delay: 0.5 }}
           className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8"
         >
-          <div className="bg-finovate-navy rounded-3xl p-12">
+          <div className="bg-finovate-navy rounded-3xl p-12 border-4 border-finovate-orange">
             <div className="text-center">
               <h2 className="text-4xl font-bold text-orange-500 mb-12">Облигации</h2>
 
@@ -196,7 +184,7 @@ export default function InvestmentPage() {
           transition={{ delay: 0.6 }}
           className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8"
         >
-          <div className="bg-finovate-navy rounded-3xl p-12">
+          <div className="bg-finovate-navy rounded-3xl p-12 border-4 border-finovate-orange">
             <div className="text-center">
               <h2 className="text-4xl font-bold text-orange-500 mb-12">ETF</h2>
 
