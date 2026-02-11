@@ -1,8 +1,10 @@
+
 import type { Metadata } from 'next'
 import { Inter, Poppins } from 'next/font/google'
 import './globals.css'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
+import { ProfileProvider } from '@/store/profileStore'
 
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
@@ -31,9 +33,11 @@ export default function RootLayout({
   return (
     <html lang="ru" className={`${inter.variable} ${poppins.variable}`}>
       <body className={`${inter.className} font-sans antialiased`}>
-        <Navigation />
-        {children}
-        <Footer />
+        <ProfileProvider>
+          <Navigation />
+          {children}
+          <Footer />
+        </ProfileProvider>
       </body>
     </html>
   )

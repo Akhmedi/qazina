@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 // Интерфейсы
@@ -12,6 +12,8 @@ interface Transaction {
   category: string
   type: 'income' | 'expense'
   date: string
+  month: number
+  year: number
 }
 
 interface Goal {
@@ -22,6 +24,23 @@ interface Goal {
   monthlyContribution: number
   deadline: string
   initialPayment?: number
+}
+
+interface HistoricalData {
+  month: number
+  year: number
+  income: number
+  expense: number
+}
+
+// Категории с цветами для диаграммы
+const EXPENSE_CATEGORIES = {
+  utilities: { name: 'Коммунальные услуги', color: '#F28B30' },
+  telecom: { name: 'Связь', color: '#5A6CF5' },
+  food: { name: 'Питание', color: '#10B981' },
+  transport: { name: 'Транспорт', color: '#F59E0B' },
+  entertainment: { name: 'Развлечения', color: '#EF4444' },
+  other: { name: 'Прочее', color: '#8B5CF6' }
 }
 
 // Иконки
@@ -55,32 +74,190 @@ const ChartIcon = () => (
   </svg>
 )
 
-// Заглушка для линейного графика
-const LineChart = ({ period }: { period: string }) => (
-  <div className="bg-white rounded-2xl p-6 border border-gray-200">
-    <div className="flex items-center justify-between mb-4">
-      <h3 className="text-xl font-bold text-finovate-navy">Динамика трат</h3>
-      <div className="flex space-x-2">
-        <span className="px-3 py-1 bg-finovate-orange text-white rounded-lg text-sm">{period}</span>
-      </div>
-    </div>
-    <div className="bg-gray-50 rounded-xl h-64 flex items-center justify-center">
-      <div className="text-center text-gray-500">
-        <ChartIcon />
-        <p className="mt-2">График изменения трат</p>
-        <p className="text-sm">Период: {period}</p>
-      </div>
-    </div>
-  </div>
+const PlusIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+  </svg>
 )
+
+// Компонент круговой диаграммы
+const PieChart = ({ data, total }: { data: Array<{name: string, value: number, color: string}>, total: number }) => {
+  let currentAngle = 0
+
+  return (
+    <div className="flex items-center justify-center">
+      <div className="relative">
+        <svg width="200" height="200" className="transform -rotate-90">
+          <circle
+            cx="100"
+            cy="100"
+            r="80"
+            fill="none"
+            stroke="#f3f4f6"
+            strokeWidth="20"
+          />
+          {data.map((item, index) => {
+            const percentage = (item.value / total) * 100
+            const strokeDasharray = `${(percentage / 100) * 502} 502`
+            const strokeDashoffset = -currentAngle * 502 / 100
+            currentAngle += percentage
+
+            return (
+              <circle
+                key={index}
+                cx="100"
+                cy="100"
+                r="80"
+                fill="none"
+                stroke={item.color}
+                strokeWidth="20"
+                strokeDasharray={strokeDasharray}
+                strokeDashoffset={strokeDashoffset}
+                className="transition-all duration-300"
+              />
+            )
+          })}
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-finovate-navy">
+              {total.toLocaleString()}
+            </div>
+            <div className="text-sm text-gray-600">тг</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Компонент линейного графика
+const LineChart = ({ historicalData, timeframe }: {
+  historicalData: HistoricalData[],
+  timeframe: 'months' | 'years'
+}) => {
+  const processedData = timeframe === 'months'
+    ? historicalData.slice(-12) // Последние 12 месяцев
+    : historicalData.reduce((acc, item) => {
+        const existingYear = acc.find(y => y.year === item.year)
+        if (existingYear) {
+          existingYear.income += item.income
+          existingYear.expense += item.expense
+        } else {
+          acc.push({
+            year: item.year,
+            month: 0,
+            income: item.income,
+            expense: item.expense
+          })
+        }
+        return acc
+      }, [] as HistoricalData[]).slice(-5) // Последние 5 лет
+
+  const maxValue = Math.max(
+    ...processedData.map(d => Math.max(d.income, d.expense))
+  )
+
+  return (
+    <div className="bg-gray-50 rounded-xl p-6 h-64 flex items-center justify-center">
+      {processedData.length === 0 ? (
+        <div className="text-center text-gray-500">
+          <ChartIcon />
+          <p className="mt-2">Недостаточно данных для графика</p>
+          <p className="text-sm">Добавьте исторические данные в разделе "Бюджет"</p>
+        </div>
+      ) : (
+        <div className="w-full h-full relative">
+          <svg width="100%" height="100%" className="overflow-visible">
+            {processedData.map((point, index) => {
+              const x = (index / (processedData.length - 1)) * 90 + 5
+              const yIncome = 85 - (point.income / maxValue) * 70
+              const yExpense = 85 - (point.expense / maxValue) * 70
+
+              return (
+                <g key={index}>
+                  {/* Точки доходов */}
+                  <circle
+                    cx={`${x}%`}
+                    cy={`${yIncome}%`}
+                    r="4"
+                    fill="#10B981"
+                    className="hover:r-6 transition-all cursor-pointer"
+                  />
+                  {/* Точки расходов */}
+                  <circle
+                    cx={`${x}%`}
+                    cy={`${yExpense}%`}
+                    r="4"
+                    fill="#EF4444"
+                    className="hover:r-6 transition-all cursor-pointer"
+                  />
+
+                  {/* Линии */}
+                  {index > 0 && (
+                    <>
+                      <line
+                        x1={`${((index - 1) / (processedData.length - 1)) * 90 + 5}%`}
+                        y1={`${85 - (processedData[index - 1].income / maxValue) * 70}%`}
+                        x2={`${x}%`}
+                        y2={`${yIncome}%`}
+                        stroke="#10B981"
+                        strokeWidth="2"
+                      />
+                      <line
+                        x1={`${((index - 1) / (processedData.length - 1)) * 90 + 5}%`}
+                        y1={`${85 - (processedData[index - 1].expense / maxValue) * 70}%`}
+                        x2={`${x}%`}
+                        y2={`${yExpense}%`}
+                        stroke="#EF4444"
+                        strokeWidth="2"
+                      />
+                    </>
+                  )}
+
+                  {/* Подписи */}
+                  <text
+                    x={`${x}%`}
+                    y="95%"
+                    textAnchor="middle"
+                    className="text-xs fill-gray-600"
+                  >
+                    {timeframe === 'months'
+                      ? `${String(point.month).padStart(2, '0')}.${point.year}`
+                      : point.year
+                    }
+                  </text>
+                </g>
+              )
+            })}
+          </svg>
+
+          {/* Легенда */}
+          <div className="absolute top-2 right-2 flex space-x-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span className="text-sm text-gray-600">Доходы</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <span className="text-sm text-gray-600">Расходы</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function TrackerPage() {
   const [activeTab, setActiveTab] = useState<'budget' | 'analytics' | 'goals'>('budget')
   const [goalsTab, setGoalsTab] = useState<'active' | 'completed'>('active')
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('month')
+  const [timeframe, setTimeframe] = useState<'months' | 'years'>('months')
   const [showAddIncome, setShowAddIncome] = useState(false)
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [showAddGoal, setShowAddGoal] = useState(false)
+  const [showAddHistorical, setShowAddHistorical] = useState(false)
   const [editingGoal, setEditingGoal] = useState<string | null>(null)
   const [customAmount, setCustomAmount] = useState('')
   const [showCustomInput, setShowCustomInput] = useState<string | null>(null)
@@ -94,17 +271,60 @@ export default function TrackerPage() {
     initialPayment: ''
   })
 
+  // Форма добавления исторических данных
+  const [historicalForm, setHistoricalForm] = useState({
+    type: 'expense' as 'income' | 'expense',
+    name: '',
+    amount: '',
+    category: 'other',
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear()
+  })
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Состояния для доходов и расходов
-  const [incomeItems, setIncomeItems] = useState([
-    { id: '1', name: 'Зарплата', amount: 500000, category: 'salary' }
-  ])
-
-  const [expenseItems, setExpenseItems] = useState([
-    { id: '1', name: 'Коммунальные услуги', amount: 45000, category: 'utilities' },
-    { id: '2', name: 'Мобильная связь', amount: 8000, category: 'telecom' },
-    { id: '3', name: 'Еда и напитки', amount: 120000, category: 'food' }
+  // Состояние для транзакций с датами
+  const [transactions, setTransactions] = useState<Transaction[]>([
+    {
+      id: '1',
+      name: 'Зарплата',
+      amount: 500000,
+      category: 'salary',
+      type: 'income',
+      date: new Date().toISOString(),
+      month: new Date().getMonth() + 1,
+      year: new Date().getFullYear()
+    },
+    {
+      id: '2',
+      name: 'Коммунальные услуги',
+      amount: 45000,
+      category: 'utilities',
+      type: 'expense',
+      date: new Date().toISOString(),
+      month: new Date().getMonth() + 1,
+      year: new Date().getFullYear()
+    },
+    {
+      id: '3',
+      name: 'Мобильная связь',
+      amount: 8000,
+      category: 'telecom',
+      type: 'expense',
+      date: new Date().toISOString(),
+      month: new Date().getMonth() + 1,
+      year: new Date().getFullYear()
+    },
+    {
+      id: '4',
+      name: 'Еда и напитки',
+      amount: 120000,
+      category: 'food',
+      type: 'expense',
+      date: new Date().toISOString(),
+      month: new Date().getMonth() + 1,
+      year: new Date().getFullYear()
+    }
   ])
 
   const [goals, setGoals] = useState<Goal[]>([
@@ -112,7 +332,7 @@ export default function TrackerPage() {
       id: '1',
       name: 'Первоначальный взнос на квартиру',
       targetAmount: 5000000,
-      currentAmount: 5000000, // 100% для демонстрации
+      currentAmount: 5000000,
       monthlyContribution: 150000,
       deadline: '2025-12-31',
       initialPayment: 200000
@@ -121,16 +341,52 @@ export default function TrackerPage() {
       id: '2',
       name: 'Отпуск в Европе',
       targetAmount: 800000,
-      currentAmount: 400000, // 50% для демонстрации
+      currentAmount: 400000,
       monthlyContribution: 80000,
       deadline: '2025-06-30'
     }
   ])
 
-  // Вычисления
-  const totalIncome = incomeItems.reduce((sum, item) => sum + item.amount, 0)
-  const totalExpense = expenseItems.reduce((sum, item) => sum + item.amount, 0)
+  // Генерация исторических данных (можно заменить на реальные данные из базы)
+  const [historicalData, setHistoricalData] = useState<HistoricalData[]>(() => {
+    const data: HistoricalData[] = []
+    const currentDate = new Date()
+
+    // Создаем данные за последние 12 месяцев
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
+      data.push({
+        month: date.getMonth() + 1,
+        year: date.getFullYear(),
+        income: Math.floor(Math.random() * 200000) + 400000, // 400k-600k
+        expense: Math.floor(Math.random() * 100000) + 150000  // 150k-250k
+      })
+    }
+    return data
+  })
+
+  // Вычисления для текущего периода
+  const currentIncomes = transactions.filter(t => t.type === 'income')
+  const currentExpenses = transactions.filter(t => t.type === 'expense')
+  const totalIncome = currentIncomes.reduce((sum, item) => sum + item.amount, 0)
+  const totalExpense = currentExpenses.reduce((sum, item) => sum + item.amount, 0)
   const balance = totalIncome - totalExpense
+
+  // Данные для круговой диаграммы
+  const expensesByCategory = currentExpenses.reduce((acc, expense) => {
+    const category = expense.category
+    if (!acc[category]) {
+      acc[category] = 0
+    }
+    acc[category] += expense.amount
+    return acc
+  }, {} as Record<string, number>)
+
+  const pieChartData = Object.entries(expensesByCategory).map(([category, amount]) => ({
+    name: EXPENSE_CATEGORIES[category as keyof typeof EXPENSE_CATEGORIES]?.name || 'Прочее',
+    value: amount,
+    color: EXPENSE_CATEGORIES[category as keyof typeof EXPENSE_CATEGORIES]?.color || '#8B5CF6'
+  }))
 
   // Фильтрация целей
   const activeGoals = goals.filter(goal => {
@@ -143,59 +399,52 @@ export default function TrackerPage() {
     return progress >= 100
   })
 
-  // Данные для круговой диаграммы расходов
-  const expenseChartData = expenseItems.map((item, index) => ({
-    name: item.name,
-    value: item.amount,
-    color: ['#F28B30', '#5A6CF5', '#10B981', '#F59E0B', '#EF4444'][index % 5]
-  }))
+  // Обновление исторических данных при добавлении новых транзакций
+  useEffect(() => {
+    // Пересчитываем исторические данные из транзакций
+    const dataByPeriod = transactions.reduce((acc, transaction) => {
+      const key = `${transaction.year}-${transaction.month}`
+      if (!acc[key]) {
+        acc[key] = {
+          month: transaction.month,
+          year: transaction.year,
+          income: 0,
+          expense: 0
+        }
+      }
 
-  // Функции для расчета автоматических значений
-  const calculateMissingValue = () => {
-    const target = parseFloat(goalForm.targetAmount)
-    const initial = parseFloat(goalForm.initialPayment) || 0
-    const remaining = target - initial
+      if (transaction.type === 'income') {
+        acc[key].income += transaction.amount
+      } else {
+        acc[key].expense += transaction.amount
+      }
 
-    if (goalForm.monthlyContribution && !goalForm.deadline) {
-      // Рассчитать дедлайн по ежемесячному взносу
-      const months = Math.ceil(remaining / parseFloat(goalForm.monthlyContribution))
-      const calculatedDeadline = new Date()
-      calculatedDeadline.setMonth(calculatedDeadline.getMonth() + months)
-      setGoalForm({
-        ...goalForm,
-        deadline: calculatedDeadline.toISOString().split('T')[0]
-      })
-    } else if (goalForm.deadline && !goalForm.monthlyContribution) {
-      // Рассчитать ежемесячный взнос по дедлайну
-      const deadlineDate = new Date(goalForm.deadline)
-      const now = new Date()
-      const months = Math.max(1, Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30)))
-      setGoalForm({
-        ...goalForm,
-        monthlyContribution: (remaining / months).toFixed(2)
-      })
+      return acc
+    }, {} as Record<string, HistoricalData>)
+
+    const updatedHistoricalData = Object.values(dataByPeriod).sort((a, b) => {
+      if (a.year !== b.year) return a.year - b.year
+      return a.month - b.month
+    })
+
+    if (updatedHistoricalData.length > 0) {
+      setHistoricalData(updatedHistoricalData)
     }
-  }
+  }, [transactions])
 
-  // Функции для добавления элементов
-  const addIncomeItem = (name: string, amount: number) => {
-    setIncomeItems([...incomeItems, {
-      id: Date.now().toString(),
-      name,
-      amount,
-      category: 'other'
+  // Функции для работы с транзакциями
+  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
+    setTransactions([...transactions, {
+      ...transaction,
+      id: Date.now().toString()
     }])
   }
 
-  const addExpenseItem = (name: string, amount: number) => {
-    setExpenseItems([...expenseItems, {
-      id: Date.now().toString(),
-      name,
-      amount,
-      category: 'other'
-    }])
+  const removeTransaction = (id: string) => {
+    setTransactions(transactions.filter(t => t.id !== id))
   }
 
+  // Функции для целей
   const addGoal = (name: string, targetAmount: number, monthlyContribution: number, deadline: string, initialPayment?: number) => {
     setGoals([...goals, {
       id: Date.now().toString(),
@@ -222,12 +471,64 @@ export default function TrackerPage() {
     ))
   }
 
-  const removeItem = (id: string, type: 'income' | 'expense') => {
-    if (type === 'income') {
-      setIncomeItems(incomeItems.filter(item => item.id !== id))
-    } else {
-      setExpenseItems(expenseItems.filter(item => item.id !== id))
+  // Обработчики форм
+  const handleGoalFormChange = (field: string, value: string) => {
+    const newForm = { ...goalForm, [field]: value }
+    setGoalForm(newForm)
+  }
+
+  const handleGoalSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!goalForm.name || !goalForm.targetAmount) {
+      alert('Пожалуйста, заполните название цели и целевую сумму')
+      return
     }
+    if (!goalForm.monthlyContribution && !goalForm.deadline) {
+      alert('Пожалуйста, заполните либо ежемесячный взнос, либо дату дедлайна')
+      return
+    }
+
+    addGoal(
+      goalForm.name,
+      Number(goalForm.targetAmount),
+      Number(goalForm.monthlyContribution),
+      goalForm.deadline,
+      Number(goalForm.initialPayment) || undefined
+    )
+
+    setGoalForm({
+      name: '',
+      targetAmount: '',
+      monthlyContribution: '',
+      deadline: '',
+      initialPayment: ''
+    })
+    setShowAddGoal(false)
+  }
+
+  const handleHistoricalSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const currentDate = new Date()
+
+    addTransaction({
+      name: historicalForm.name,
+      amount: Number(historicalForm.amount),
+      category: historicalForm.category,
+      type: historicalForm.type,
+      date: new Date(historicalForm.year, historicalForm.month - 1, 1).toISOString(),
+      month: historicalForm.month,
+      year: historicalForm.year
+    })
+
+    setHistoricalForm({
+      type: 'expense',
+      name: '',
+      amount: '',
+      category: 'other',
+      month: currentDate.getMonth() + 1,
+      year: currentDate.getFullYear()
+    })
+    setShowAddHistorical(false)
   }
 
   const handleFileUpload = () => {
@@ -248,51 +549,6 @@ export default function TrackerPage() {
       setCustomAmount('')
       setShowCustomInput(null)
     }
-  }
-
-  // Обработка изменений в форме цели
-  const handleGoalFormChange = (field: string, value: string) => {
-    const newForm = { ...goalForm, [field]: value }
-    setGoalForm(newForm)
-
-    // Автоматический расчет при изменении ключевых полей
-    if (field === 'monthlyContribution' || field === 'deadline' || field === 'targetAmount' || field === 'initialPayment') {
-      setTimeout(() => calculateMissingValue(), 100)
-    }
-  }
-
-  const handleGoalSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    // Проверка обязательных полей
-    if (!goalForm.name || !goalForm.targetAmount) {
-      alert('Пожалуйста, заполните название цели и целевую сумму')
-      return
-    }
-
-    // Проверка что хотя бы одно из полей (ежемесячный взнос или дедлайн) заполнено
-    if (!goalForm.monthlyContribution && !goalForm.deadline) {
-      alert('Пожалуйста, заполните либо ежемесячный взнос, либо дату дедлайна')
-      return
-    }
-
-    addGoal(
-      goalForm.name,
-      Number(goalForm.targetAmount),
-      Number(goalForm.monthlyContribution),
-      goalForm.deadline,
-      Number(goalForm.initialPayment) || undefined
-    )
-
-    // Сброс формы
-    setGoalForm({
-      name: '',
-      targetAmount: '',
-      monthlyContribution: '',
-      deadline: '',
-      initialPayment: ''
-    })
-    setShowAddGoal(false)
   }
 
   return (
@@ -389,6 +645,180 @@ export default function TrackerPage() {
                 </div>
               </div>
 
+              {/* Добавление данных за прошлые периоды */}
+              <div className="bg-white rounded-3xl shadow-2xl p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-finovate-navy">Исторические данные</h2>
+                  <button
+                    onClick={() => setShowAddHistorical(true)}
+                    className="bg-finovate-orange text-white px-6 py-3 rounded-xl font-semibold hover:bg-finovate-orange-hover transition-colors flex items-center space-x-2"
+                  >
+                    <PlusIcon />
+                    <span>Добавить данные за прошлый период</span>
+                  </button>
+                </div>
+
+                <p className="text-gray-600 mb-6">
+                  Добавляйте доходы и расходы за предыдущие месяцы для построения полной картины ваших финансов
+                </p>
+
+                {/* Форма добавления исторических данных */}
+                <AnimatePresence>
+                  {showAddHistorical && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="bg-gray-50 rounded-2xl p-6 mb-6"
+                    >
+                      <h3 className="text-lg font-semibold text-finovate-navy mb-4">
+                        Добавить данные за прошлый период
+                      </h3>
+                      <form onSubmit={handleHistoricalSubmit} className="space-y-4">
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Тип операции
+                            </label>
+                            <select
+                              value={historicalForm.type}
+                              onChange={(e) => setHistoricalForm({
+                                ...historicalForm,
+                                type: e.target.value as 'income' | 'expense'
+                              })}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
+                            >
+                              <option value="expense">Расход</option>
+                              <option value="income">Доход</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Категория
+                            </label>
+                            <select
+                              value={historicalForm.category}
+                              onChange={(e) => setHistoricalForm({
+                                ...historicalForm,
+                                category: e.target.value
+                              })}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
+                            >
+                              {historicalForm.type === 'expense' ? (
+                                <>
+                                  <option value="utilities">Коммунальные услуги</option>
+                                  <option value="telecom">Связь</option>
+                                  <option value="food">Питание</option>
+                                  <option value="transport">Транспорт</option>
+                                  <option value="entertainment">Развлечения</option>
+                                  <option value="other">Прочее</option>
+                                </>
+                              ) : (
+                                <>
+                                  <option value="salary">Зарплата</option>
+                                  <option value="business">Бизнес</option>
+                                  <option value="investments">Инвестиции</option>
+                                  <option value="other">Прочее</option>
+                                </>
+                              )}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Название
+                          </label>
+                          <input
+                            type="text"
+                            value={historicalForm.name}
+                            onChange={(e) => setHistoricalForm({
+                              ...historicalForm,
+                              name: e.target.value
+                            })}
+                            placeholder="Например: Коммунальные платежи за январь"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
+                            required
+                          />
+                        </div>
+
+                        <div className="grid md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Сумма (тг)
+                            </label>
+                            <input
+                              type="number"
+                              value={historicalForm.amount}
+                              onChange={(e) => setHistoricalForm({
+                                ...historicalForm,
+                                amount: e.target.value
+                              })}
+                              placeholder="0"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Месяц
+                            </label>
+                            <select
+                              value={historicalForm.month}
+                              onChange={(e) => setHistoricalForm({
+                                ...historicalForm,
+                                month: Number(e.target.value)
+                              })}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
+                            >
+                              {Array.from({length: 12}, (_, i) => (
+                                <option key={i + 1} value={i + 1}>
+                                  {new Date(2024, i).toLocaleString('ru', { month: 'long' })}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Год
+                            </label>
+                            <select
+                              value={historicalForm.year}
+                              onChange={(e) => setHistoricalForm({
+                                ...historicalForm,
+                                year: Number(e.target.value)
+                              })}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-finovate-orange focus:border-finovate-orange"
+                            >
+                              {Array.from({length: 5}, (_, i) => {
+                                const year = new Date().getFullYear() - i
+                                return <option key={year} value={year}>{year}</option>
+                              })}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="flex space-x-4">
+                          <button
+                            type="submit"
+                            className="flex-1 bg-finovate-orange text-white py-3 rounded-xl font-semibold hover:bg-finovate-orange-hover transition-colors"
+                          >
+                            Добавить
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowAddHistorical(false)}
+                            className="flex-1 bg-gray-500 text-white py-3 rounded-xl font-semibold hover:bg-gray-600 transition-colors"
+                          >
+                            Отмена
+                          </button>
+                        </div>
+                      </form>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
               {/* Загрузка файла */}
               <div className="bg-white rounded-3xl shadow-2xl p-8">
                 <div className="flex items-center justify-center space-x-4 mb-6">
@@ -447,13 +877,13 @@ export default function TrackerPage() {
                   </div>
 
                   <div className="space-y-3">
-                    {incomeItems.map((item) => (
+                    {currentIncomes.map((item) => (
                       <div key={item.id} className="flex items-center justify-between p-4 bg-green-50 rounded-xl">
                         <span className="font-medium text-gray-700">{item.name}</span>
                         <div className="flex items-center space-x-3">
                           <span className="font-bold text-green-600">{item.amount.toLocaleString()} тг</span>
                           <button
-                            onClick={() => removeItem(item.id, 'income')}
+                            onClick={() => removeTransaction(item.id)}
                             className="text-red-500 hover:text-red-700 text-xl"
                           >
                             ×
@@ -478,7 +908,17 @@ export default function TrackerPage() {
                             const formData = new FormData(e.target as HTMLFormElement)
                             const name = formData.get('name') as string
                             const amount = Number(formData.get('amount'))
-                            addIncomeItem(name, amount)
+                            const currentDate = new Date()
+
+                            addTransaction({
+                              name,
+                              amount,
+                              category: 'other',
+                              type: 'income',
+                              date: currentDate.toISOString(),
+                              month: currentDate.getMonth() + 1,
+                              year: currentDate.getFullYear()
+                            })
                             setShowAddIncome(false)
                           }}
                           className="space-y-3"
@@ -536,13 +976,13 @@ export default function TrackerPage() {
                   </div>
 
                   <div className="space-y-3">
-                    {expenseItems.map((item) => (
+                    {currentExpenses.map((item) => (
                       <div key={item.id} className="flex items-center justify-between p-4 bg-red-50 rounded-xl">
                         <span className="font-medium text-gray-700">{item.name}</span>
                         <div className="flex items-center space-x-3">
                           <span className="font-bold text-red-600">{item.amount.toLocaleString()} тг</span>
                           <button
-                            onClick={() => removeItem(item.id, 'expense')}
+                            onClick={() => removeTransaction(item.id)}
                             className="text-red-500 hover:text-red-700 text-xl"
                           >
                             ×
@@ -567,7 +1007,17 @@ export default function TrackerPage() {
                             const formData = new FormData(e.target as HTMLFormElement)
                             const name = formData.get('name') as string
                             const amount = Number(formData.get('amount'))
-                            addExpenseItem(name, amount)
+                            const currentDate = new Date()
+
+                            addTransaction({
+                              name,
+                              amount,
+                              category: 'other',
+                              type: 'expense',
+                              date: currentDate.toISOString(),
+                              month: currentDate.getMonth() + 1,
+                              year: currentDate.getFullYear()
+                            })
                             setShowAddExpense(false)
                           }}
                           className="space-y-3"
@@ -638,8 +1088,88 @@ export default function TrackerPage() {
                 </div>
               </div>
 
-              <div className="grid lg:grid-cols-1 gap-8">
-                <LineChart period={period === 'week' ? 'Неделя' : period === 'month' ? 'Месяц' : 'Год'} />
+              {/* Основной блок аналитики - разделение 30/70 */}
+              <div className="bg-white rounded-3xl shadow-2xl p-8">
+                <h2 className="text-2xl font-bold text-finovate-navy mb-8 text-center">Анализ расходов</h2>
+
+                <div className="grid lg:grid-cols-10 gap-8">
+                  {/* Левая часть - 30% - Круговая диаграмма */}
+                  <div className="lg:col-span-3">
+                    <h3 className="text-xl font-bold text-finovate-navy mb-6 text-center">
+                      Распределение расходов
+                    </h3>
+
+                    {pieChartData.length > 0 ? (
+                      <>
+                        <PieChart data={pieChartData} total={totalExpense} />
+
+                        {/* Список категорий */}
+                        <div className="mt-6 space-y-3">
+                          {pieChartData.map((item, index) => {
+                            const percentage = ((item.value / totalExpense) * 100).toFixed(1)
+                            return (
+                              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                                <div className="flex items-center space-x-3">
+                                  <div
+                                    className="w-4 h-4 rounded-full"
+                                    style={{ backgroundColor: item.color }}
+                                  ></div>
+                                  <span className="text-sm font-medium text-gray-700">
+                                    {item.name}
+                                  </span>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-sm font-bold text-finovate-navy">
+                                    {item.value.toLocaleString()} тг
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {percentage}%
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center text-gray-500 py-8">
+                        <p>Нет данных о расходах</p>
+                        <p className="text-sm mt-2">Добавьте расходы в разделе "Бюджет"</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Правая часть - 70% - Линейный график */}
+                  <div className="lg:col-span-7">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-xl font-bold text-finovate-navy">Динамика трат</h3>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => setTimeframe('months')}
+                          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                            timeframe === 'months'
+                              ? 'bg-finovate-orange text-white'
+                              : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                          }`}
+                        >
+                          По месяцам
+                        </button>
+                        <button
+                          onClick={() => setTimeframe('years')}
+                          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                            timeframe === 'years'
+                              ? 'bg-finovate-orange text-white'
+                              : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                          }`}
+                        >
+                          По годам
+                        </button>
+                      </div>
+                    </div>
+
+                    <LineChart historicalData={historicalData} timeframe={timeframe} />
+                  </div>
+                </div>
               </div>
 
               {/* Статистика */}
@@ -648,25 +1178,25 @@ export default function TrackerPage() {
                 <div className="grid md:grid-cols-4 gap-6">
                   <div className="text-center p-6 bg-blue-50 rounded-2xl">
                     <div className="text-2xl font-bold text-blue-600 mb-2">
-                      {Math.round(totalExpense / expenseItems.length).toLocaleString()} тг
+                      {currentExpenses.length > 0 ? Math.round(totalExpense / currentExpenses.length).toLocaleString() : 0} тг
                     </div>
                     <div className="text-gray-600">Средний расход</div>
                   </div>
                   <div className="text-center p-6 bg-purple-50 rounded-2xl">
                     <div className="text-2xl font-bold text-purple-600 mb-2">
-                      {expenseItems.length}
+                      {Object.keys(expensesByCategory).length}
                     </div>
                     <div className="text-gray-600">Категорий трат</div>
                   </div>
                   <div className="text-center p-6 bg-indigo-50 rounded-2xl">
                     <div className="text-2xl font-bold text-indigo-600 mb-2">
-                      {((balance / totalIncome) * 100).toFixed(1)}%
+                      {totalIncome > 0 ? ((balance / totalIncome) * 100).toFixed(1) : 0}%
                     </div>
                     <div className="text-gray-600">Сбережения</div>
                   </div>
                   <div className="text-center p-6 bg-cyan-50 rounded-2xl">
                     <div className="text-2xl font-bold text-cyan-600 mb-2">
-                      {Math.max(...expenseItems.map(item => item.amount)).toLocaleString()} тг
+                      {currentExpenses.length > 0 ? Math.max(...currentExpenses.map(item => item.amount)).toLocaleString() : 0} тг
                     </div>
                     <div className="text-gray-600">Крупнейший расход</div>
                   </div>
@@ -686,6 +1216,13 @@ export default function TrackerPage() {
             >
               <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold text-finovate-navy">Финансовые цели</h2>
+                <button
+                  onClick={() => setShowAddGoal(true)}
+                  className="bg-finovate-orange text-white px-6 py-3 rounded-xl font-semibold hover:bg-finovate-orange-hover transition-colors flex items-center space-x-2"
+                >
+                  <PlusIcon />
+                  <span>Добавить цель</span>
+                </button>
               </div>
 
               {/* Вкладки для целей */}
@@ -812,7 +1349,6 @@ export default function TrackerPage() {
                             {isCompleted ? (
                               // Для выполненных целей
                               <div className="text-center py-8">
-                                {/*<div className="text-6xl mb-4">🎉</div>*/}
                                 <div className="text-2xl font-bold text-green-600 mb-2">
                                   Цель выполнена!
                                 </div>
