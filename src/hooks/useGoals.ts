@@ -17,7 +17,7 @@ export function useGoals() {
       setGoals(goalsManager.getAll())
     })
 
-    return unsubscribe
+    return () => void unsubscribe()
   }, [])
 
   return {
