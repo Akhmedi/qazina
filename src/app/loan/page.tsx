@@ -1,8 +1,8 @@
-
 'use client'
 
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { goalsAPI } from '@/lib/goals'
 
 // Интерфейсы для типизации
 interface LoanCalculation {
@@ -35,6 +35,12 @@ interface NewsItem {
   image: string
   link: string
   source: string
+}
+
+// Интерфейс для состояния кнопки "В цели"
+interface AddToGoalsButtonState {
+  status: 'disabled' | 'enabled' | 'success'
+  text: string
 }
 
 // Исправленный компонент для анимации появления элементов при скролле
@@ -167,6 +173,95 @@ const TipsBlock = () => {
   )
 }
 
+// Компонент кнопки "В цели"
+const AddToGoalsButton = ({
+  calculationType,
+  amount,
+  rate,
+  term,
+  calculation,
+  onAddToGoals
+}: {
+  calculationType: 'differentiated' | 'annuity'
+  amount: string
+  rate: string
+  term: string
+  calculation: LoanCalculation | null
+  onAddToGoals: () => void
+}) => {
+  const [buttonState, setButtonState] = useState<AddToGoalsButtonState>({
+    status: 'disabled',
+    text: 'В цели'
+  })
+
+  // Проверка валидности полей
+  const isValid = calculation !== null &&
+    parseFloat(amount) > 0 &&
+    parseFloat(rate) > 0 &&
+    parseFloat(term) > 0
+
+  // Обновляем состояние кнопки при изменении валидности или расчетов
+  useEffect(() => {
+    if (!isValid) {
+      setButtonState({ status: 'disabled', text: 'В цели' })
+    } else {
+      // Сбрасываем на "enabled" при новом валидном расчете
+      setButtonState({ status: 'enabled', text: 'В цели' })
+    }
+  }, [isValid, calculation])
+
+  const handleClick = () => {
+    if (buttonState.status === 'enabled' && isValid) {
+      onAddToGoals()
+
+      // Показываем успешное состояние
+      setButtonState({ status: 'success', text: 'Добавлено' })
+
+      // Сбрасываем состояние через 2 секунды
+      setTimeout(() => {
+        setButtonState({ status: 'enabled', text: 'В цели' })
+      }, 2000)
+    }
+  }
+
+  const getButtonStyles = () => {
+    switch (buttonState.status) {
+      case 'disabled':
+        return 'bg-gray-300 text-gray-500 cursor-not-allowed'
+      case 'success':
+        return 'bg-green-500 text-white'
+      case 'enabled':
+      default:
+        return 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer'
+    }
+  }
+
+  return (
+    <motion.button
+      onClick={handleClick}
+      disabled={buttonState.status === 'disabled'}
+      className={`px-3 py-2 rounded-full text-sm font-medium transition-all duration-300 ${getButtonStyles()}`}
+      whileHover={buttonState.status === 'enabled' ? { scale: 1.05 } : {}}
+      whileTap={buttonState.status === 'enabled' ? { scale: 0.95 } : {}}
+      initial={false}
+      animate={{
+        backgroundColor: buttonState.status === 'success' ? '#10B981' : undefined
+      }}
+    >
+      {buttonState.status === 'success' && (
+        <motion.span
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="inline-block mr-1 bg-white text-green-500 rounded-full w-5 h-5 flex items-center justify-center text-xs"
+        >
+          ✓
+        </motion.span>
+      )}
+      {buttonState.text}
+    </motion.button>
+  )
+}
+
 // Компонент калькулятора
 const LoanCalculator = ({
   title,
@@ -249,6 +344,57 @@ const LoanCalculator = ({
     setAiResponse(responses[Math.floor(Math.random() * responses.length)])
   }
 
+  // Функция добавления в цели
+const handleAddToGoals = () => {
+  if (!calculation) return
+
+  const loanAmount = parseFloat(amount)
+  const loanRate = parseFloat(rate)
+  const loanTerm = parseFloat(term)
+
+  try {
+    // Создаем дедлайн кредита (текущая дата + срок кредита в годах)
+    const currentDate = new Date()
+    const deadline = new Date(currentDate.getFullYear() + loanTerm, currentDate.getMonth(), currentDate.getDate())
+
+    // Генерируем название цели на основе типа расчета
+    const goalName = calculationType === 'annuity'
+      ? 'Кредит (Аннуитетный)'
+      : 'Кредит (Дифференцированный)'
+
+    // Формируем объект цели согласно интерфейсу Goal
+    const goalData = {
+      name: goalName,
+      targetAmount: calculation.totalAmount, // Общая сумма выплат
+      currentAmount: 0, // Начальное значение
+      monthlyContribution: calculation.monthlyPayment, // Ежемесячный платеж
+      deadline: deadline.toISOString(), // Дедлайн в ISO формате
+      type: 'loan' as const // Тип цели - кредитная
+    }
+
+    // Проверка на дубликаты - ищем существующую цель с теми же параметрами
+    const existingGoals = goalsAPI.getAll()
+    const isDuplicate = existingGoals.some(goal =>
+      goal.type === 'loan' &&
+      goal.targetAmount === goalData.targetAmount &&
+      goal.monthlyContribution === goalData.monthlyContribution &&
+      goal.deadline === goalData.deadline
+    )
+
+    if (isDuplicate) {
+      console.log('Цель с такими параметрами уже существует')
+      return
+    }
+
+    // Добавляем новую цель
+    const newGoal = goalsAPI.add(goalData)
+    console.log('Новая кредитная цель добавлена:', newGoal)
+
+  } catch (error) {
+    console.error('Ошибка при добавлении цели:', error)
+  }
+}
+
   return (
     <motion.div
       className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 hover:shadow-3xl transition-all duration-500"
@@ -261,30 +407,42 @@ const LoanCalculator = ({
 
       {/* Основной расчет */}
       <div className="space-y-6 mb-8">
-        {/* Выбор метода расчета */}
+        {/* Выбор метода расчета с кнопкой "В цели" */}
         <div>
           <label className="form-label">Метод расчета</label>
-          <div className="flex space-x-4">
-            <label className="flex items-center">
-              <input
-                type="radio"
-                value="annuity"
-                checked={calculationType === 'annuity'}
-                onChange={(e) => setCalculationType(e.target.value as 'annuity')}
-                className="mr-2 text-finovate-orange focus:ring-finovate-orange"
-              />
-              Аннуитетный
-            </label>
-            <label className="flex items-center">
-              <input
-                type="radio"
-                value="differentiated"
-                checked={calculationType === 'differentiated'}
-                onChange={(e) => setCalculationType(e.target.value as 'differentiated')}
-                className="mr-2 text-finovate-orange focus:ring-finovate-orange"
-              />
-              Дифференцированный
-            </label>
+          <div className="flex items-center justify-between">
+            <div className="flex space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  value="annuity"
+                  checked={calculationType === 'annuity'}
+                  onChange={(e) => setCalculationType(e.target.value as 'annuity')}
+                  className="mr-2 text-finovate-orange focus:ring-finovate-orange"
+                />
+                Аннуитетный
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  value="differentiated"
+                  checked={calculationType === 'differentiated'}
+                  onChange={(e) => setCalculationType(e.target.value as 'differentiated')}
+                  className="mr-2 text-finovate-orange focus:ring-finovate-orange"
+                />
+                Дифференцированный
+              </label>
+            </div>
+
+            {/* Кнопка "В цели" */}
+            <AddToGoalsButton
+              calculationType={calculationType}
+              amount={amount}
+              rate={rate}
+              term={term}
+              calculation={calculation}
+              onAddToGoals={handleAddToGoals}
+            />
           </div>
         </div>
 

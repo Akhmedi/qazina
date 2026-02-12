@@ -34,7 +34,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-finovate-beige to-finovate-beige-light pt-20">
+    <div className="min-h-screen bg-gradient-to-br from-gray-700 to-finovate-white pt-20">
       <div className="container-max py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

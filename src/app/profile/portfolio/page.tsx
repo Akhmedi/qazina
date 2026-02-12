@@ -149,7 +149,7 @@ export default function PortfolioPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-finovate-white to-finovate-orange-hover pt-20">
+    <div className="min-h-screen bg-gradient-to-br from-finovate-white to-orange-500 pt-20">
       <div className="container-max py-8">
         {/* Header */}
         <motion.div

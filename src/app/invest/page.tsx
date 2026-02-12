@@ -1,4 +1,3 @@
-
 'use client'
 
 import Link from 'next/link'
@@ -27,12 +26,18 @@ export default function InvestmentPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="flex justify-center gap-8 mb-20"
+          className="flex md:flex-row flex-col justify-center md:gap-8 gap-6 mb-20 md:items-center items-stretch"
         >
           {/* Stocks Button */}
-          <motion.div whileHover={{ y: -5, scale: 1.02 }}>
+          <motion.div
+            whileHover={{ y: -5, scale: 1.02 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="md:w-80 w-full"
+          >
             <Link href="/invest/stocks" className="block">
-              <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl border-2 border-gray-200 p-8 hover:border-finovate-orange hover:shadow-2xl transition-all duration-300 w-80 h-64 flex flex-col justify-center items-center group">
+              <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl border-2 border-gray-200 p-8 hover:border-finovate-orange hover:shadow-2xl transition-all duration-300 w-full md:h-64 h-56 flex flex-col justify-center items-center group">
                 <div className="bg-finovate-orange-light p-6 rounded-2xl mb-6 group-hover:bg-finovate-orange group-hover:text-white transition-all duration-300">
                     <svg className="w-10 h-10 text-finovate-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21V3m0 18h18M7 13l4-4 4 4 6-6" />
@@ -50,9 +55,15 @@ export default function InvestmentPage() {
           </motion.div>
 
           {/* Bonds Button */}
-          <motion.div whileHover={{ y: -5, scale: 1.02 }}>
+          <motion.div
+            whileHover={{ y: -5, scale: 1.02 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="md:w-80 w-full"
+          >
             <Link href="/invest/bonds" className="block">
-              <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl border-2 border-gray-200 p-8 hover:border-finovate-orange hover:shadow-2xl transition-all duration-300 w-80 h-64 flex flex-col justify-center items-center group">
+              <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl border-2 border-gray-200 p-8 hover:border-finovate-orange hover:shadow-2xl transition-all duration-300 w-full md:h-64 h-56 flex flex-col justify-center items-center group">
                 <div className="bg-finovate-orange-light p-6 rounded-2xl mb-6 group-hover:bg-finovate-orange group-hover:text-white transition-all duration-300">
                   <svg className="w-10 h-10 text-finovate-orange" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M3 3h4v18H3V3zm7 6h4v12h-4V9zm7-4h4v16h-4V5z" />
@@ -70,9 +81,15 @@ export default function InvestmentPage() {
           </motion.div>
 
           {/* ETF Button */}
-          <motion.div whileHover={{ y: -5, scale: 1.02 }}>
+          <motion.div
+            whileHover={{ y: -5, scale: 1.02 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="md:w-80 w-full"
+          >
             <Link href="/invest/etf" className="block">
-              <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl border-2 border-gray-200 p-8 hover:border-finovate-orange hover:shadow-2xl transition-all duration-300 w-80 h-64 flex flex-col justify-center items-center group">
+              <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl border-2 border-gray-200 p-8 hover:border-finovate-orange hover:shadow-2xl transition-all duration-300 w-full md:h-64 h-56 flex flex-col justify-center items-center group">
                 <div className="bg-finovate-orange-light p-6 rounded-2xl mb-6 group-hover:bg-finovate-orange group-hover:text-white transition-all duration-300">
                   <svg className="w-10 h-10 text-finovate-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 21V3m0 18h18M7 17l4-4 4 3 6-7m0 0h-5m5 0v5" />
@@ -97,7 +114,7 @@ export default function InvestmentPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.6 }}
           className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8"
         >
           <div className="bg-finovate-navy rounded-3xl p-12 border-4 border-finovate-orange">
@@ -139,7 +156,7 @@ export default function InvestmentPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.7 }}
           className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8"
         >
           <div className="bg-finovate-navy rounded-3xl p-12 border-4 border-finovate-orange">
@@ -181,7 +198,7 @@ export default function InvestmentPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.8 }}
           className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8"
         >
           <div className="bg-finovate-navy rounded-3xl p-12 border-4 border-finovate-orange">
